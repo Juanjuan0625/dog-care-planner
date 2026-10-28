@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="anvil-role-lede">Add a new dog</div>
+
+{% if errors %}
+<div class="error-box">
+    <strong>Please fix the following:</strong>
+    <ul>
+        {% for e in errors %}
+        <li>{{ e }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<div class="anvil-role-section-card">
+    <form method="post" action="{{ url_for('add_dog') }}" enctype="multipart/form-data">
+        <label for="name">Name *</label>
+        <input type="text" id="name" name="name" placeholder="e.g. Juanjuan" required
+               value="{{ old.name or '' }}">
+
+        <label for="breed">Breed *</label>
+        <input type="text" id="breed" name="breed" placeholder="e.g. Shiba Inu" required
+               value="{{ old.breed or '' }}">
+
+        <label for="age">Age (years) *</label>
+        <select id="age" name="age" style="width:100%; min-height:42px; padding:9px 12px; border:1px solid var(--blank-border); border-radius:8px; background:white;">
+            {% for a in range(1, 16) %}
+            <option value="{{ a }}" {{ 'selected' if (old.age or '3') == a|string }}>{{ a }} year{{ 's' if a > 1 }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="notes">Special care notes</label>
+        <input type="text" id="notes" name="notes" placeholder="e.g. allergic to chicken"
+               value="{{ old.notes or '' }}">
+
+        <label>Feeding times</label>
+        <div class="row" style="gap:16px;">
+            <div>
+                <div class="anvil-role-muted" style="font-size:13px;">Breakfast</div>
+                <input type="time" name="breakfast_time" value="{{ old.breakfast_time or '08:00' }}"
+                       style="min-height:42px; padding:9px 12px; border:1px solid var(--blank-border); border-radius:8px;">
+            </div>
+            <div>
+                <div class="anvil-role-muted" style="font-size:13px;">Dinner</div>
+                <input type="time" name="dinner_time" value="{{ old.dinner_time or '18:00' }}"
+                       style="min-height:42px; padding:9px 12px; border:1px solid var(--blank-border); border-radius:8px;">
+            </div>
+        </div>
+
+        <label for="walk_minutes">Daily walk</label>
+        <select id="walk_minutes" name="walk_minutes" style="width:100%; min-height:42px; padding:9px 12px; border:1px solid var(--blank-border); border-radius:8px; background:white;">
+            {% for w in [15, 30, 45, 60, 90, 120] %}
+            <option value="{{ w }}" {{ 'selected' if (old.walk_minutes or '30') == w|string }}>{{ w }} minutes</option>
+            {% endfor %}
+        </select>
+
+        <label>Medication (optional)</label>
+        <div class="row" style="gap:12px;">
+            <input type="text" name="med_name" placeholder="Medication name"
+                   value="{{ old.med_name or '' }}" style="flex:1;">
+            <input type="time" name="med_time" value="{{ old.med_time or '' }}"
+                   style="min-height:42px; padding:9px 12px; border:1px solid var(--blank-border); border-radius:8px;">
+        </div>
+
+        <label>Dog photo (optional)</label>
+        <div class="file-upload">
+            <input type="file" id="photo" name="photo" accept="image/*"
+                   onchange="document.getElementById('filename').textContent = this.files[0] ? this.files[0].name : 'No file chosen';">
+            <label for="photo" class="file-upload-label">📷 Choose image</label>
+            <span id="filename" class="anvil-role-muted">No file chosen</span>
+        </div>
+
+        <div class="form-actions">
+            <div class="anvil-button">
+                <button type="submit">Save dog</button>
+            </div>
+            <div class="anvil-button secondary">
+                <a href="{{ url_for('dogs_page') }}">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

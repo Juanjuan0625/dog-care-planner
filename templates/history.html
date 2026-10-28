@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="anvil-role-lede">History — review care tasks from any day</div>
+
+<div class="anvil-role-section-card">
+    <div class="anvil-role-section-heading">{{ year }}-{{ '%02d' % month }}</div>
+    <div class="cal-grid" style="margin-top:12px;">
+        <div class="cal-head">Mon</div>
+        <div class="cal-head">Tue</div>
+        <div class="cal-head">Wed</div>
+        <div class="cal-head">Thu</div>
+        <div class="cal-head">Fri</div>
+        <div class="cal-head">Sat</div>
+        <div class="cal-head">Sun</div>
+
+        {% for c in cells %}
+            {% if c %}
+            <a class="cal-cell {{ 'today' if c.date == today_str else '' }} {{ 'selected' if c.date == date else '' }}"
+               href="{{ url_for('history', date=c.date) }}"
+               title="{{ c.date }}: {{ c.done }}/{{ c.total }} tasks">
+                <div class="cal-day">{{ c.day }}</div>
+                {% if c.total %}
+                <div class="cal-count">{{ c.done }}/{{ c.total }}</div>
+                <div class="cal-bar"><div class="cal-bar-fill" style="width:{{ c.pct }}%;"></div></div>
+                {% endif %}
+            </a>
+            {% else %}
+            <div class="cal-cell other-month"></div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<div class="anvil-role-section-card">
+    <div class="stats-row">
+        <div class="stat-box">
+            <div class="num">{{ total }}</div>
+            <div class="lbl">Tasks on {{ date }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="num">{{ done }}</div>
+            <div class="lbl">Completed</div>
+        </div>
+        <div class="stat-box">
+            <div class="num">{{ pct }}%</div>
+            <div class="lbl">Done</div>
+        </div>
+    </div>
+
+    {% if tasks %}
+    <table>
+        <thead>
+            <tr>
+                <th>Time</th><th>Dog</th><th>Task</th><th>Category</th><th>Status</th><th>Photo</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for t in tasks %}
+            <tr>
+                <td>{{ t.time_slot }}</td>
+                <td>{{ t.dog_name }}</td>
+                <td class="{{ 'done' if t.completed else '' }}">{{ t.description }}</td>
+                <td><span class="pill {{ t.category }}">{{ t.category }}</span></td>
+                <td>
+                    {% if t.completed %}<span class="pill done">✓ done</span>
+                    {% else %}<span class="pill open">○ pending</span>{% endif %}
+                </td>
+                <td>
+                    {% if t.photo %}
+                    <img class="thumb" src="{{ url_for('uploaded_file', filename=t.photo) }}" alt="checkin">
+                    {% else %}
+                    <span class="anvil-role-muted">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="anvil-role-muted" style="margin-top:12px;">No tasks recorded on this date.</p>
+    {% endif %}
+</div>
+{% endblock %}

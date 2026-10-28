@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="anvil-role-lede">Today's care board — {{ today }}</div>
+
+<div class="anvil-role-section-card">
+    <div class="space-between">
+        <div class="anvil-role-section-heading">Daily tasks</div>
+        <div class="anvil-button">
+            <a href="{{ url_for('generate') }}">↻ Generate today's tasks</a>
+        </div>
+    </div>
+
+    <div class="row" style="margin:12px 0;">
+        <span class="anvil-role-muted">Filter:</span>
+        <div class="anvil-button {{ 'secondary' if category else '' }}">
+            <a href="{{ url_for('tasks_today') }}">All</a>
+        </div>
+        <div class="anvil-button {{ 'secondary' if category != 'feeding' else '' }}">
+            <a href="{{ url_for('tasks_today', category='feeding') }}">🍚 Feeding</a>
+        </div>
+        <div class="anvil-button {{ 'secondary' if category != 'walking' else '' }}">
+            <a href="{{ url_for('tasks_today', category='walking') }}">🦮 Walking</a>
+        </div>
+        <div class="anvil-button {{ 'secondary' if category != 'medication' else '' }}">
+            <a href="{{ url_for('tasks_today', category='medication') }}">💊 Medication</a>
+        </div>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-box">
+            <div class="num">{{ total }}</div>
+            <div class="lbl">Total tasks</div>
+        </div>
+        <div class="stat-box">
+            <div class="num">{{ done }}</div>
+            <div class="lbl">Completed</div>
+        </div>
+        <div class="stat-box">
+            <div class="num">{{ pct }}%</div>
+            <div class="lbl">Done</div>
+        </div>
+    </div>
+
+    {% if tasks %}
+    <div class="anvil-role-task-list">
+        {% for t in tasks %}
+        <div class="anvil-role-task-card">
+            <div class="row" style="justify-content:space-between;">
+                <div class="row">
+                    <div class="task-icon">
+                        {% if t.category == 'feeding' %}🍚
+                        {% elif t.category == 'walking' %}🦮
+                        {% elif t.category == 'medication' %}💊
+                        {% else %}📋{% endif %}
+                    </div>
+                    <div>
+                        <span class="anvil-role-task-time">{{ t.time_slot }}</span>
+                        <span class="anvil-role-task-description {{ 'done' if t.completed else '' }}">{{ t.description }}</span>
+                        <div style="margin-top:6px;">
+                            <span class="pill {{ t.category }}">{{ t.category }}</span>
+                            <span class="anvil-role-muted" style="margin-left:8px;">{{ t.dog_name }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    {% if t.photo %}
+                    <img class="thumb" src="{{ url_for('uploaded_file', filename=t.photo) }}" alt="checkin">
+                    {% endif %}
+                    {% if not t.completed %}
+                    <form class="checkin-form" method="post"
+                          action="{{ url_for('checkin', task_id=t.task_id) }}">
+                        <div class="anvil-button">
+                            <button type="submit">✓ Done</button>
+                        </div>
+                    </form>
+                    {% else %}
+                    <span class="pill done">✓ done</span>
+                    <div class="anvil-button secondary">
+                        <a href="{{ url_for('uncheck', task_id=t.task_id) }}">↶ Undo</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="anvil-role-muted" style="margin-top:14px;">
+        No tasks yet. Click "Generate today's tasks" to build the list from your dogs' care requirements.
+    </p>
+    {% endif %}
+</div>
+
+<div class="anvil-role-section-card">
+    <div class="anvil-role-section-heading">Last 7 days</div>
+    <div class="week-chart">
+        {% for d in week %}
+        <div class="week-col">
+            <div class="anvil-role-muted" style="font-size:11px; margin-bottom:4px;">{{ d.date[5:] }}</div>
+            <div class="week-bar" style="height:{{ d.pct if d.pct > 0 else 4 }}px;"></div>
+            <div class="anvil-role-muted" style="font-size:11px; margin-top:4px;">
+                {% if d.total %}{{ d.done }}/{{ d.total }}{% else %}—{% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

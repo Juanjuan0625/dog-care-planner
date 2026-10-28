@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="anvil-role-lede">Dogs in care</div>
+
+<div class="anvil-button" style="margin-bottom:8px;">
+    <a href="{{ url_for('add_dog') }}">+ Add a new dog</a>
+</div>
+
+{% if dogs %}
+<div class="anvil-role-dog-list" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+    {% for d in dogs %}
+    <a class="anvil-role-dog-card" href="{{ url_for('dog_detail', dog_name=d.name) }}"
+       style="text-decoration:none; color:inherit; display:block;">
+        <div class="row">
+            {% if d.photo %}
+            <img class="dog-avatar" src="{{ url_for('uploaded_file', filename=d.photo) }}" alt="{{ d.name }}">
+            {% else %}
+            <div class="dog-placeholder">🐶</div>
+            {% endif %}
+            <div>
+                <div style="font-weight:700; font-size:17px; color:var(--blank-text);">{{ d.name }}</div>
+                <div class="anvil-role-muted">{{ d.breed }} · {{ d.age }} years</div>
+            </div>
+        </div>
+        {% if d.notes %}
+        <div style="margin-top:12px; font-size:13px; background:var(--blank-surface-muted); padding:8px 10px; border-radius:6px; color:var(--blank-muted);">
+            📋 {{ d.notes }}
+        </div>
+        {% endif %}
+        <div class="anvil-role-muted" style="margin-top:10px; font-size:13px;">
+            Feeds: {{ d.feeding_times | join(', ') }} · Walk: {{ d.walk_minutes }} min
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="anvil-role-section-card">
+    <p class="anvil-role-muted">No dogs registered yet. Click "Add a new dog" to register the first one.</p>
+</div>
+{% endif %}
+{% endblock %}

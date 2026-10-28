@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="anvil-role-section-card">
+    <div class="row" style="gap:24px; align-items:center;">
+        {% if dog.photo %}
+        <img class="dog-avatar-big" src="{{ url_for('uploaded_file', filename=dog.photo) }}" alt="{{ dog.name }}">
+        {% else %}
+        <div class="dog-placeholder-big">🐶</div>
+        {% endif %}
+        <div>
+            <div style="font-size:26px; font-weight:700; color:var(--blank-text);">{{ dog.name }}</div>
+            <div class="anvil-role-muted">{{ dog.breed }} · {{ dog.age }} years</div>
+            {% if dog.notes %}
+            <div style="margin-top:10px; background:var(--blank-surface-muted); padding:8px 12px; border-radius:6px; color:var(--blank-muted); font-size:14px; display:inline-block;">
+                📋 {{ dog.notes }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-box">
+            <div class="num">{{ dog.feeding_times | join(', ') }}</div>
+            <div class="lbl">Feeding times</div>
+        </div>
+        <div class="stat-box">
+            <div class="num">{{ dog.walk_minutes }} min</div>
+            <div class="lbl">Daily walk</div>
+        </div>
+        <div class="stat-box">
+            <div class="num">{{ done }}/{{ total }}</div>
+            <div class="lbl">Tasks done</div>
+        </div>
+        <div class="stat-box">
+            <div class="num">🔥 {{ streak }}</div>
+            <div class="lbl">Day streak</div>
+        </div>
+    </div>
+
+    <div class="anvil-role-section-card" style="margin-top:18px; padding:20px;">
+        <div class="anvil-role-section-heading" style="font-size:16px;">Care information</div>
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:16px 24px; margin-top:12px;">
+            <div>
+                <div class="anvil-role-muted" style="font-size:12px;">Breed</div>
+                <div style="font-weight:600;">{{ dog.breed or '—' }}</div>
+            </div>
+            <div>
+                <div class="anvil-role-muted" style="font-size:12px;">Age</div>
+                <div style="font-weight:600;">{{ dog.age }} years</div>
+            </div>
+            <div>
+                <div class="anvil-role-muted" style="font-size:12px;">Feeding</div>
+                <div style="font-weight:600;">{{ dog.feeding_times | join(' · ') }}</div>
+            </div>
+            <div>
+                <div class="anvil-role-muted" style="font-size:12px;">Walk</div>
+                <div style="font-weight:600;">{{ dog.walk_minutes }} min/day</div>
+            </div>
+        </div>
+        <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--blank-border);">
+            <div class="anvil-role-muted" style="font-size:12px;">Medication</div>
+            <div style="font-weight:600;">
+                {% if dog.medication %}
+                    {% for m in dog.medication %}
+                        💊 {{ m.drug }} at {{ m.time }}{% if not loop.last %}<br>{% endif %}
+                    {% endfor %}
+                {% else %}
+                    <span style="color:var(--blank-muted); font-weight:400;">None</span>
+                {% endif %}
+            </div>
+        </div>
+        <div style="margin-top:12px;">
+            <div class="anvil-role-muted" style="font-size:12px;">Special notes</div>
+            <div style="font-weight:600;">{{ dog.notes or '—' }}</div>
+        </div>
+    </div>
+
+    <form method="post" action="{{ url_for('upload_dog_photo', dog_name=dog.name) }}"
+          enctype="multipart/form-data"
+          style="margin-top:18px; padding-top:18px; border-top:1px solid var(--blank-border);">
+        <div class="anvil-role-section-heading" style="font-size:16px;">Photo</div>
+        <input type="file" id="photo" name="photo" accept="image/*"
+               style="display:none;"
+               onchange="document.getElementById('photo-filename').textContent = this.files[0] ? this.files[0].name : 'No file selected'; document.getElementById('upload-btn').disabled = !this.files[0]; document.getElementById('upload-btn').style.opacity = this.files[0] ? '1' : '0.5';">
+        <label for="photo" class="upload-dropzone" style="display:block; padding:22px; text-align:center; border:2px dashed var(--blank-border); border-radius:10px; background:var(--blank-bg); cursor:pointer; margin:12px 0;">
+            <div style="font-size:28px;">📷</div>
+            <div style="font-weight:600; margin-top:6px;">Click to choose a photo</div>
+            <div id="photo-filename" class="anvil-role-muted" style="font-size:13px; margin-top:4px;">No file selected</div>
+        </label>
+        <div class="form-actions">
+            <div class="anvil-button">
+                <button type="submit" id="upload-btn" disabled style="opacity:0.5;">Upload photo</button>
+            </div>
+            <div class="anvil-button secondary">
+                <a href="{{ url_for('edit_dog', dog_name=dog.name) }}">✏️ Edit details</a>
+            </div>
+            <div class="anvil-button danger">
+                <button type="submit" form="delete-form">🗑 Delete</button>
+            </div>
+            <div class="anvil-button secondary">
+                <a href="{{ url_for('dogs_page') }}">← Back to all dogs</a>
+            </div>
+        </div>
+    </form>
+    <form id="delete-form" method="post" action="{{ url_for('delete_dog', dog_name=dog.name) }}"
+          onsubmit="return confirm('Delete {{ dog.name }} and all their task history? This cannot be undone.');"></form>
+</div>
+
+<div class="anvil-role-section-card">
+    <div class="space-between">
+        <div class="anvil-role-section-heading">Task history</div>
+        <div class="row" style="gap:8px; align-items:center; flex-wrap:wrap;">
+            {% if not selected_date %}
+                {% if not show_all and count_other > 0 %}
+                <div class="anvil-button secondary">
+                    <a href="{{ url_for('dog_detail', dog_name=dog.name, all=1) }}">Show all ({{ count_other }} more)</a>
+                </div>
+                {% elif show_all %}
+                <div class="anvil-button secondary">
+                    <a href="{{ url_for('dog_detail', dog_name=dog.name) }}">Show recent 7 days</a>
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="anvil-button secondary">
+                    <a href="{{ url_for('dog_detail', dog_name=dog.name) }}">← Recent 7 days</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% if tasks %}
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th><th>Time</th><th>Task</th><th>Category</th><th>Status</th><th>Photo</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for t in tasks %}
+            <tr>
+                <td>{{ t.task_date }}</td>
+                <td>{{ t.time_slot }}</td>
+                <td class="{{ 'done' if t.completed else '' }}">{{ t.description }}</td>
+                <td><span class="pill {{ t.category }}">{{ t.category }}</span></td>
+                <td>
+                    {% if t.completed %}<span class="pill done">✓ done</span>
+                    {% else %}<span class="pill open">○ pending</span>{% endif %}
+                </td>
+                <td>
+                    {% if t.photo %}
+                    <img class="thumb" src="{{ url_for('uploaded_file', filename=t.photo) }}" alt="checkin">
+                    {% else %}
+                    <span class="anvil-role-muted">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="anvil-role-muted">No tasks for this dog yet. Generate today's tasks from the home page.</p>
+    {% endif %}
+</div>
+{% endblock %}

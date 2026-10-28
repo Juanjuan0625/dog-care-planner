@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="anvil-role-lede">Summary — how care is going</div>
+
+<div class="stats-row">
+    <a class="stat-box" href="{{ url_for('history') }}" title="See this week's history" style="text-decoration:none; color:inherit; cursor:pointer;">
+        <div class="num">{{ week_pct }}%</div>
+        <div class="lbl">This week · {{ week_done }}/{{ week_total }} tasks</div>
+    </a>
+    <a class="stat-box" href="{{ url_for('calendar') }}" title="See the monthly calendar" style="text-decoration:none; color:inherit; cursor:pointer;">
+        <div class="num">{{ month_pct }}%</div>
+        <div class="lbl">This month · {{ month_done }}/{{ month_total }} tasks</div>
+    </a>
+    <a class="stat-box" href="{{ url_for('dogs_page') }}" title="See all dogs" style="text-decoration:none; color:inherit; cursor:pointer;">
+        <div class="num">{{ dog_stats | length }}</div>
+        <div class="lbl">Dogs in care</div>
+    </a>
+</div>
+
+<div class="anvil-role-section-card">
+    <div class="anvil-role-section-heading">Last 7 days</div>
+    <div class="week-chart">
+        {% for d in week %}
+        <a class="week-col" href="{{ url_for('history', date=d.date) }}"
+           title="{{ d.date }}: {{ d.done }}/{{ d.total }} tasks ({{ d.pct }}%)"
+           style="text-decoration:none; color:inherit; cursor:pointer;">
+            <div class="anvil-role-muted" style="font-size:11px; margin-bottom:4px;">{{ d.date[5:] }}</div>
+            <div class="week-bar" style="height:{{ d.pct if d.pct > 0 else 4 }}px;"
+                 onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1';"></div>
+            <div class="anvil-role-muted" style="font-size:11px; margin-top:4px;">
+                {% if d.total %}{{ d.done }}/{{ d.total }}{% else %}—{% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="anvil-role-section-card">
+    <div class="anvil-role-section-heading">This month, day by day</div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap:6px; margin-top:12px;">
+        {% for d in month_days %}
+        <a href="{{ url_for('history', date=d.date) }}"
+           title="{{ d.date }}: {{ d.done }}/{{ d.total }} tasks ({{ d.pct }}%)"
+           style="height:36px; border-radius:6px; display:flex; align-items:center; justify-content:center;
+                  font-size:11px; text-decoration:none;
+                  color:{{ 'white' if d.pct >= 60 else 'var(--blank-muted)' }};
+                  background:{{ 'var(--blank-primary)' if d.pct >= 60 else ('#9fc0cf' if d.pct >= 30 else ('#d8e4ec' if d.total else 'var(--blank-surface-muted)')) }};
+                  transition:transform 120ms ease, opacity 120ms ease;"
+           onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)';">
+            {{ d.day }}
+        </a>
+        {% endfor %}
+    </div>
+    <div class="anvil-role-muted" style="margin-top:10px; font-size:12px;">
+        Click any day to see details. Darker = more tasks completed.
+    </div>
+</div>
+
+<div class="anvil-role-section-card">
+    <div class="anvil-role-section-heading">Dog leaderboard</div>
+    {% if dog_stats %}
+    <table>
+        <thead><tr><th>Dog</th><th>Streak</th><th>Done</th><th>Rate</th></tr></thead>
+        <tbody>
+        {% for d in dog_stats %}
+        <tr style="cursor:pointer;" onclick="window.location='{{ url_for('dog_detail', dog_name=d.name) }}'"
+            title="See {{ d.name }}'s detail page">
+            <td><a href="{{ url_for('dog_detail', dog_name=d.name) }}">{{ d.name }}</a></td>
+            <td>🔥 {{ d.streak }} day{{ 's' if d.streak != 1 }}</td>
+            <td>{{ d.done }}/{{ d.total }}</td>
+            <td>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="flex:1; height:8px; background:var(--blank-surface-muted); border-radius:4px; overflow:hidden;">
+                        <div style="height:100%; width:{{ d.pct }}%; background:var(--blank-primary);"></div>
+                    </div>
+                    <span class="anvil-role-muted">{{ d.pct }}%</span>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="anvil-role-muted">No dogs yet.</p>
+    {% endif %}
+</div>
+
+<div class="anvil-role-section-card">
+    <div class="anvil-role-section-heading">Tasks by category</div>
+    {% if cat_stats %}
+    <table>
+        <thead><tr><th>Category</th><th>Done</th><th>Rate</th></tr></thead>
+        <tbody>
+        {% for c in cat_stats %}
+        <tr style="cursor:pointer;" onclick="window.location='{{ url_for('category_detail', cat=c.category) }}'"
+            title="See all {{ c.category }} tasks">
+            <td><span class="pill {{ c.category }}">{{ c.category }}</span></td>
+            <td>{{ c.done }}/{{ c.total }}</td>
+            <td>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="flex:1; height:8px; background:var(--blank-surface-muted); border-radius:4px; overflow:hidden;">
+                        <div style="height:100%; width:{{ c.pct }}%; background:var(--blank-primary);"></div>
+                    </div>
+                    <span class="anvil-role-muted">{{ c.pct }}%</span>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <p class="anvil-role-muted" style="margin-top:10px; font-size:13px;">
+        Categories sorted from lowest completion to highest — focus on the bottom ones.
+    </p>
+    {% else %}
+    <p class="anvil-role-muted">No tasks recorded yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

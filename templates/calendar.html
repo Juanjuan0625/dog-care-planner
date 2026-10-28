@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="anvil-role-section-card">
+    <div class="space-between">
+        <div class="anvil-role-section-heading">{{ year }}-{{ '%02d' % month }}</div>
+        <div class="row">
+            <div class="anvil-button secondary">
+                <a href="{{ url_for('calendar', year=prev_y, month=prev_m) }}">← Prev</a>
+            </div>
+            <div class="anvil-button secondary">
+                <a href="{{ url_for('calendar') }}">Today</a>
+            </div>
+            <div class="anvil-button secondary">
+                <a href="{{ url_for('calendar', year=next_y, month=next_m) }}">Next →</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="cal-grid">
+        <div class="cal-head">Mon</div>
+        <div class="cal-head">Tue</div>
+        <div class="cal-head">Wed</div>
+        <div class="cal-head">Thu</div>
+        <div class="cal-head">Fri</div>
+        <div class="cal-head">Sat</div>
+        <div class="cal-head">Sun</div>
+
+        {% for c in cells %}
+            {% if c %}
+            <a class="cal-cell {{ 'today' if c.date == today_str else '' }}"
+               href="{{ url_for('history', date=c.date) }}">
+                <div class="cal-day">{{ c.day }}</div>
+                {% if c.total %}
+                <div class="cal-count">{{ c.done }}/{{ c.total }}</div>
+                <div class="cal-bar"><div class="cal-bar-fill" style="width:{{ c.pct }}%;"></div></div>
+                {% endif %}
+            </a>
+            {% else %}
+            <div class="cal-cell other-month"></div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
